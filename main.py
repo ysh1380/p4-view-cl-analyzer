@@ -165,12 +165,13 @@ def main():
         print(f"    → 포함된 CL: {count}개")
 
         for ch in changes:
-            # 설명 처리 (린트 오류 회피를 위해 더 안전한 방식 사용)
+            # 설명 처리 (린트 오류 회피를 위해 슬라이싱 대신 루프 사용)
             display_desc: str = str(ch.desc)
             if args.short_desc and len(display_desc) > 60:
-                # 슬라이싱 오류 방지를 위해 명시적인 형변환 또는 join 사용
-                short_text = "".join(list(display_desc)[:57])
-                display_desc = f"{short_text}..."
+                truncated_chars = []
+                for idx in range(min(57, len(display_desc))):
+                    truncated_chars.append(display_desc[idx])
+                display_desc = "".join(truncated_chars) + "..."
 
             print(f"      {ch.cl:>7}  {ch.user:<12}  {ch.date:<19}  {display_desc}")
 
