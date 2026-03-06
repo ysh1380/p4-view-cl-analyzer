@@ -15,9 +15,10 @@ import subprocess
 import sys
 import argparse
 import re
+from typing import List, Optional, Dict, Any
 
 
-def run_p4(cmd_list, input_text=None, check=True):
+def run_p4(cmd_list: List[str], input_text: Optional[str] = None, check: bool = True) -> str:
     """p4 명령어 실행 헬퍼"""
     try:
         result = subprocess.run(
@@ -28,7 +29,7 @@ def run_p4(cmd_list, input_text=None, check=True):
             capture_output=True,
             encoding="utf-8"
         )
-        return result.stdout.strip()
+        return str(result.stdout).strip()
     except FileNotFoundError:
         print("오류: 시스템에서 'p4' 명령어를 찾을 수 없습니다. Perforce 클라이언트가 설치되어 있고 PATH에 등록되어 있는지 확인해 주세요.", file=sys.stderr)
         sys.exit(1)
@@ -41,12 +42,12 @@ def run_p4(cmd_list, input_text=None, check=True):
         sys.exit(1)
 
 
-def get_template_view_lines(template_name="Common_Release"):
+def get_template_view_lines(template_name: str = "Common_Release") -> List[str]:
     """템플릿 spec에서 View: 매핑 경로들만 추출 (depot 쪽 경로)"""
-    spec = run_p4(["client", "-t", template_name, "-o"])
+    spec: str = run_p4(["client", "-t", template_name, "-o"])
     lines = spec.splitlines()
 
-    view_paths = []
+    view_paths: List[str] = []
     in_view = False
 
     for line in lines:
@@ -66,7 +67,20 @@ def get_template_view_lines(template_name="Common_Release"):
     return view_paths
 
 
-def get_changes_with_desc(depot_path, start_cl, end_cl):
+class Change:
+    cl: int
+    user: str
+    date: str
+    desc: str
+
+    def __init__(self, cl: int, user: str, date: str):
+        self.cl = cl
+        self.user = user
+        self.date = date
+        self.desc = ""
+
+
+def get_changes_with_desc(depot_path: str, start_cl: int, end_cl: int) -> List[Change]:
     """p4 changes -l 로 설명 포함 목록 가져오기"""
     cmd = [
         "changes",
@@ -74,37 +88,37 @@ def get_changes_with_desc(depot_path, start_cl, end_cl):
         "-s", "submitted",
         f"{depot_path}@{start_cl},{end_cl}"
     ]
-    output = run_p4(cmd, check=False)
+    output: str = run_p4(cmd, check=False)
 
-    changes = []
-    current = None
+    changes: List[Change] = []
+    current: Optional[Change] = None
 
     for line in output.splitlines():
         if line.startswith("Change "):
-            if current:
+            if current is not None:
                 changes.append(current)
             
             # Change <CL> on <date> <time> by <user>@<client>
             match = re.search(r"Change\s+(\d+)\s+on\s+([\d/]+)\s+([\d:]+)\s+by\s+([^@\s]+)", line)
             if match:
                 try:
-                    cl = int(match.group(1))
+                    cl_val = int(match.group(1))
                     on_date = f"{match.group(2)} {match.group(3)}"
                     by_user = match.group(4)
-                    current = {"cl": cl, "user": by_user, "date": on_date, "desc": ""}
+                    current = Change(cl_val, by_user, on_date)
                 except (ValueError, IndexError):
                     current = None
             else:
                 current = None
-        elif current and line.strip():
+        elif current is not None and line.strip():
             # 설명 첫 줄만 저장
-            if not current.get("desc"):
-                current["desc"] = line.strip()
+            if not current.desc:
+                current.desc = line.strip()
 
-    if current:
+    if current is not None:
         changes.append(current)
 
-    return sorted(changes, key=lambda x: x["cl"])
+    return sorted(changes, key=lambda x: x.cl)
 
 
 def main():
@@ -152,11 +166,11 @@ def main():
         print(f"    → 포함된 CL: {count}개")
 
         for ch in changes:
-            desc = ch["desc"]
+            desc = ch.desc
             if args.short_desc:
                 desc = (desc[:57] + "...") if len(desc) > 60 else desc
 
-            print(f"      {ch['cl']:>7}  {ch['user']:<12}  {ch['date']:<19}  {desc}")
+            print(f"      {ch.cl:>7}  {ch.user:<12}  {ch.date:<19}  {desc}")
 
         print()
 
