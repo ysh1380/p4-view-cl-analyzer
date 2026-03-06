@@ -165,13 +165,19 @@ def main():
         print(f"    → 포함된 CL: {count}개")
 
         for ch in changes:
-            # 설명 처리 (린트 오류 회피를 위해 슬라이싱 대신 루프 사용)
-            display_desc: str = str(ch.desc)
+            # 설명 처리 (린트 오류 회피를 위해 명시적인 타입 선언 사용)
+            display_desc: str = ch.desc
             if args.short_desc and len(display_desc) > 60:
-                truncated_chars = []
-                for idx in range(min(57, len(display_desc))):
-                    truncated_chars.append(display_desc[idx])
-                display_desc = "".join(truncated_chars) + "..."
+                short_list: List[str] = []
+                # 린트 오류를 피하기 위해 인덱스로 안전하게 한 글자씩 추출
+                max_len = 57
+                if len(display_desc) < max_len:
+                    max_len = len(display_desc)
+                
+                for idx in range(max_len):
+                    char = display_desc[idx]
+                    short_list.append(char)
+                display_desc = "".join(short_list) + "..."
 
             print(f"      {ch.cl:>7}  {ch.user:<12}  {ch.date:<19}  {display_desc}")
 
