@@ -44,6 +44,14 @@ python main.py 2000000 2010000 --template 애플_C_release
     → 범위 내 변경사항 없음
 ```
 
+## 테스트 실행
+
+본 프로젝트는 `unittest`를 사용한 단위 테스트를 포함하고 있습니다. 실제 Perforce 서버 연결 없이도 핵심 파싱 로직을 검증할 수 있습니다.
+
+```bash
+python test_main.py
+```
+
 ## 프로젝트 구조
 - `main.py`: 핵심 분석 스크립트
 - `requirements.txt`: 필요한 라이브러리 목록
