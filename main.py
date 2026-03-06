@@ -41,7 +41,7 @@ def run_p4(cmd_list, input_text=None, check=True):
         sys.exit(1)
 
 
-def get_template_view_lines(template_name="애플_C"):
+def get_template_view_lines(template_name="Common_Release"):
     """템플릿 spec에서 View: 매핑 경로들만 추출 (depot 쪽 경로)"""
     spec = run_p4(["client", "-t", template_name, "-o"])
     lines = spec.splitlines()
@@ -106,7 +106,7 @@ def main():
     parser = argparse.ArgumentParser(description="View별 범위 내 CL 목록 + 설명 출력")
     parser.add_argument("start_cl", type=int, help="시작 CL (포함)")
     parser.add_argument("end_cl",   type=int, help="끝   CL (포함)")
-    parser.add_argument("--template", default="애플_C", help="client template 이름")
+    parser.add_argument("--template", default="Common_Release", help="client template 이름")
     parser.add_argument("--short-desc", action="store_true",
                         help="설명 첫 60자 정도로 짧게 자르기")
     parser.add_argument("--min-cl", type=int, default=1,

@@ -11,14 +11,14 @@ Perforce (Helix Core) client template의 View 매핑을 한 줄씩 분석해서,
 
 ## 옵션
 
-- `--template NAME`: Perforce client template 이름 (기본값: `애플_C`)
+- `--template NAME`: Perforce client template 이름 (기본값: `Common_Release`)
 - `--short-desc`: 설명을 약 60자 정도로 잘라서 출력
 - `--min-cl N`: CL 개수가 N개 미만이면 해당 경로 스킵 (노이즈 제거용)
 
 ## 사용법
 
 ```bash
-# 기본 사용 (시작 CL ~ 종료 CL, 템플릿 기본값 '애플_C' 사용)
+# 기본 사용 (시작 CL ~ 종료 CL, 템플릿 기본값 'Common_Release' 사용)
 python main.py 1500000 1505000
 
 # 설명 짧게 자르기 + 최소 5개 이상인 경로만 보기
