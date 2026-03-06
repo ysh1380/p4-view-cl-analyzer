@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
-import main
-from main import get_template_view_lines, get_changes_with_desc, Change
+import main  # type: ignore
+from main import get_template_view_lines, get_changes_with_desc, Change  # type: ignore
 
 class TestP4Analyzer(unittest.TestCase):
 
