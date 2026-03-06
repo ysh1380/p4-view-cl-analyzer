@@ -83,17 +83,22 @@ def get_changes_with_desc(depot_path, start_cl, end_cl):
         if line.startswith("Change "):
             if current:
                 changes.append(current)
-            parts = line.split()
-            try:
-                cl = int(parts[1])
-                by_user = parts[3].rstrip("'")
-                on_date = " ".join(parts[5:9])   # 날짜+시간 부분 대략
-                current = {"cl": cl, "user": by_user, "date": on_date, "desc": ""}
-            except:
+            
+            # Change <CL> on <date> <time> by <user>@<client>
+            match = re.search(r"Change\s+(\d+)\s+on\s+([\d/]+)\s+([\d:]+)\s+by\s+([^@\s]+)", line)
+            if match:
+                try:
+                    cl = int(match.group(1))
+                    on_date = f"{match.group(2)} {match.group(3)}"
+                    by_user = match.group(4)
+                    current = {"cl": cl, "user": by_user, "date": on_date, "desc": ""}
+                except (ValueError, IndexError):
+                    current = None
+            else:
                 current = None
         elif current and line.strip():
-            # 설명 첫 줄만 저장 (또는 전체 원하면 current["desc"] += line + "\n")
-            if not current["desc"]:
+            # 설명 첫 줄만 저장
+            if not current.get("desc"):
                 current["desc"] = line.strip()
 
     if current:
