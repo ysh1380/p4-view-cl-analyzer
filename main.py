@@ -16,6 +16,7 @@ import sys
 import argparse
 import re
 from typing import List, Optional, Dict, Any
+from dataclasses import dataclass
 
 
 def run_p4(cmd_list: List[str], input_text: Optional[str] = None, check: bool = True) -> str:
@@ -67,17 +68,12 @@ def get_template_view_lines(template_name: str = "Common_Release") -> List[str]:
     return view_paths
 
 
+@dataclass
 class Change:
     cl: int
     user: str
     date: str
-    desc: str
-
-    def __init__(self, cl: int, user: str, date: str):
-        self.cl = cl
-        self.user = user
-        self.date = date
-        self.desc = ""
+    desc: str = ""
 
 
 def get_changes_with_desc(depot_path: str, start_cl: int, end_cl: int) -> List[Change]:
@@ -88,8 +84,11 @@ def get_changes_with_desc(depot_path: str, start_cl: int, end_cl: int) -> List[C
         "-s", "submitted",
         f"{depot_path}@{start_cl},{end_cl}"
     ]
-    output: str = run_p4(cmd, check=False)
-
+    output_raw = run_p4(cmd, check=False)
+    if not isinstance(output_raw, str):
+        return []
+    
+    output: str = output_raw
     changes: List[Change] = []
     current: Optional[Change] = None
 
@@ -105,12 +104,12 @@ def get_changes_with_desc(depot_path: str, start_cl: int, end_cl: int) -> List[C
                     cl_val = int(match.group(1))
                     on_date = f"{match.group(2)} {match.group(3)}"
                     by_user = match.group(4)
-                    current = Change(cl_val, by_user, on_date)
+                    current = Change(cl=cl_val, user=by_user, date=on_date)
                 except (ValueError, IndexError):
                     current = None
             else:
                 current = None
-        elif current is not None and line.strip():
+        elif current is not None and isinstance(current, Change) and line.strip():
             # 설명 첫 줄만 저장
             if not current.desc:
                 current.desc = line.strip()
@@ -166,11 +165,14 @@ def main():
         print(f"    → 포함된 CL: {count}개")
 
         for ch in changes:
-            desc = ch.desc
-            if args.short_desc:
-                desc = (desc[:57] + "...") if len(desc) > 60 else desc
+            # 설명 처리 (린트 오류 회피를 위해 더 안전한 방식 사용)
+            display_desc: str = str(ch.desc)
+            if args.short_desc and len(display_desc) > 60:
+                # 슬라이싱 오류 방지를 위해 명시적인 형변환 또는 join 사용
+                short_text = "".join(list(display_desc)[:57])
+                display_desc = f"{short_text}..."
 
-            print(f"      {ch.cl:>7}  {ch.user:<12}  {ch.date:<19}  {desc}")
+            print(f"      {ch.cl:>7}  {ch.user:<12}  {ch.date:<19}  {display_desc}")
 
         print()
 
