@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch
+import main
 from main import get_template_view_lines, get_changes_with_desc, Change
 
 class TestP4Analyzer(unittest.TestCase):
